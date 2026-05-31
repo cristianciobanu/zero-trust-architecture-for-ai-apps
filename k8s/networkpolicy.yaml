@@ -1,0 +1,86 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-service-default-deny
+  namespace: rag-service
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-service-allow-ingress
+  namespace: rag-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rag-service
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from ingress-nginx controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8000
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-service-allow-egress
+  namespace: rag-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rag-service
+  policyTypes:
+    - Egress
+  egress:
+    # Allow to Qdrant
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: financial-qa
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: qdrant
+      ports:
+        - port: 6333
+          protocol: TCP
+    # Allow to Ollama
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: financial-qa
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ollama
+      ports:
+        - port: 11434
+          protocol: TCP
+    # Allow DNS
+    - to: []
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # Allow to IDP (Keycloak — JWKS endpoint fetch for JWT validation)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: idp
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: idp
+      ports:
+        - port: 8080
+          protocol: TCP

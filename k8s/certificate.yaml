@@ -1,0 +1,15 @@
+# cert-manager Certificate for rag-service TLS
+# Used for ALB → pod HTTPS re-encryption (backend-protocol: HTTPS)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rag-service-tls
+  namespace: rag-service
+spec:
+  secretName: rag-service-tls
+  dnsNames:
+    - rag-service.rag-service.svc.cluster.local
+    - financial-qa.example.com   # replace with your domain
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
