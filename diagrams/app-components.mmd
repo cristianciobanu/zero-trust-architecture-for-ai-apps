@@ -1,0 +1,34 @@
+---
+title: "Figure 8.1 — Application Components and Allowed Paths"
+---
+flowchart TD
+    subgraph NS0["istio-ingress ns"]
+        GW[Istio Gateway]
+    end
+
+    subgraph NS1["rag-service ns"]
+        RAG[RAG Service]
+    end
+
+    subgraph NS2["ollama ns"]
+        LLM[Ollama]
+    end
+
+    subgraph NS3["qdrant ns"]
+        VDB[(Qdrant)]
+    end
+
+    subgraph NS4["keycloak ns"]
+        KC[Keycloak]
+        PG[(Postgres)]
+    end
+
+    GW -->|":8000"| RAG
+    GW -->|":8080"| KC
+    RAG -->|":11434"| LLM
+    RAG -->|":6333 / :6334"| VDB
+    RAG -->|":8080 JWKS"| KC
+    KC -->|":5432"| PG
+
+    classDef plain fill:#ffffff,stroke:#333,color:#000
+    class GW,RAG,LLM,VDB,KC,PG plain

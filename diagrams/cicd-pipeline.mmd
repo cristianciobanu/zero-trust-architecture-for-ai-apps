@@ -1,0 +1,22 @@
+flowchart LR
+    subgraph CI["CI workflow (every push / PR)"]
+        Dev([Developer]) --> PR[GitHub PR]
+        PR --> Test[Lint + pytest]
+        Test --> Build[docker build]
+        Build --> Scan{Trivy CVE Scan}
+        Scan -->|CRITICAL or HIGH| Fail([Fail])
+        Scan -->|clean| Sign[Cosign keyless sign]
+        Sign --> Push[Push to ECR]
+    end
+
+    subgraph CD["CD workflow (push to main only)"]
+        Deploy[kubectl apply / Helm]
+        Deploy --> Admit{Kyverno verifyImages}
+        Admit -->|signature missing| Reject([Reject])
+        Admit -->|signature valid| Run([Pod Running])
+    end
+
+    Push -.->|merge to main| Deploy
+
+    classDef plain fill:#ffffff,stroke:#333,color:#000
+    class Dev,PR,Test,Build,Scan,Sign,Push,Deploy,Admit,Run,Fail,Reject plain

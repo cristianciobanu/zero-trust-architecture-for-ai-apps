@@ -1,0 +1,18 @@
+---
+title: "Figure 7.1 — Three-Layer Network Zero-Trust"
+---
+flowchart TB
+    Attacker([Attacker])
+
+    subgraph L1["Layer 1: VPC isolation (private subnets, security groups)"]
+        subgraph L2["Layer 2: NetworkPolicy (L3/L4, default-deny)"]
+            subgraph L3["Layer 3: Istio AuthorizationPolicy (L7, SPIFFE identity)"]
+                Pod[Application Pod]
+            end
+        end
+    end
+
+    Attacker -.->|"must bypass all three layers"| Pod
+
+    classDef plain fill:#ffffff,stroke:#333,color:#000
+    class Pod,Attacker plain

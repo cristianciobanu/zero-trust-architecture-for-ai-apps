@@ -1,0 +1,43 @@
+---
+title: "Figure 6.1 — High-Level Architecture"
+---
+flowchart TD
+    Client([Client])
+
+    subgraph Edge["AWS Edge"]
+        CF[CloudFront + WAF]
+    end
+
+    subgraph VPC["VPC (private subnets)"]
+        ALB[Private ALB]
+
+        subgraph Cluster["EKS Cluster"]
+            GW[Istio Gateway]
+            RAG[RAG Service]
+            LLM[Ollama]
+            VDB[(Qdrant)]
+            KC[Keycloak]
+            OBS[Observability stack]
+        end
+
+        SM[Secrets Manager]
+        KMS[KMS]
+    end
+
+    Client --> CF
+    CF --> ALB
+    ALB --> GW
+    GW --> RAG
+    GW --> KC
+    RAG --> LLM
+    RAG --> VDB
+    RAG --> KC
+    SM -.-> RAG
+    KMS -.-> SM
+    OBS -.-> RAG
+    OBS -.-> LLM
+    OBS -.-> VDB
+    OBS -.-> KC
+
+    classDef plain fill:#ffffff,stroke:#333,color:#000
+    class Client,CF,ALB,GW,RAG,LLM,VDB,KC,OBS,SM,KMS plain
