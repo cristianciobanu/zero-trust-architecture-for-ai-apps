@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal — Financial Q&amp;A</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #f5a623;
+      --accent-dim: #3a2800;
+      --green: #34c77b;
+      --yellow: #f5c842;
+      --red: #e05555;
+      --text: #e8eaf6;
+      --muted: #7b82a8;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-size: 17px; font-weight: 600; }
+    .logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .user-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 14px 6px 8px; font-size: 13px;
+    }
+    .user-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent-dim); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+    }
+    .role-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      padding: 2px 7px; border-radius: 10px;
+      background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent);
+      text-transform: uppercase;
+    }
+    .btn { border: none; cursor: pointer; border-radius: 7px; font-family: var(--font); font-size: 13px; padding: 7px 16px; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-primary { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* ── layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      flex: 1;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 24px 0;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+    /* ── main pane ── */
+    .main-pane { padding-right: 24px; border-right: 1px solid var(--border); }
+
+    .section-title {
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 14px; margin-top: 28px;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    /* ── upload card ── */
+    .upload-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 24px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .drop-zone .drop-icon { font-size: 40px; margin-bottom: 12px; }
+    .drop-zone h3 { font-size: 15px; margin-bottom: 6px; }
+    .drop-zone p { font-size: 13px; color: var(--muted); }
+
+    .upload-status {
+      margin-top: 14px; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px; display: none;
+    }
+    .upload-status.progress { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+    .upload-status.success  { background: #0a2e1a; border: 1px solid var(--green); color: var(--green); }
+    .upload-status.error    { background: #2a0000; border: 1px solid var(--red);   color: var(--red); }
+
+    /* progress bar */
+    .progress-bar-wrap { margin-top: 10px; background: var(--surface2); border-radius: 4px; height: 4px; display: none; }
+    .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width 0.3s; }
+
+    /* ── ingest log table ── */
+    .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .log-table th {
+      text-align: left; padding: 8px 12px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+      color: var(--muted); text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--surface2); }
+    .pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .pill-green { background: #0a2e1a; color: var(--green); border: 1px solid var(--green); }
+    .pill-red   { background: #2a0000; color: var(--red);   border: 1px solid var(--red); }
+    .empty-log { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+
+    /* ── sidebar ── */
+    .sidebar { padding-left: 24px; }
+    .sidebar-section { margin-bottom: 24px; }
+    .sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+
+    .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+    .info-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--muted); }
+    .pill-blue  { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+    .pill-yellow{ background: #2a2000; color: var(--yellow); border: 1px solid var(--yellow); }
+
+    /* loading */
+    #loading-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 100;
+    }
+    #loading-screen .spinner {
+      width: 40px; height: 40px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-screen p { color: var(--muted); font-size: 14px; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p id="loading-msg">Initialising authentication…</p>
+</div>
+
+<div id="app" style="display:none; flex-direction:column; min-height:100vh;">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚙️</div>
+      <div>
+        <div class="logo-text">Admin Portal</div>
+        <div class="logo-sub">Document Management · Privileged Access</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name">Loading…</span>
+        <span class="role-badge">admin</span>
+      </div>
+      <a href="/" class="btn btn-ghost">← Client UI</a>
+      <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="main-pane">
+
+      <div class="section-title">Upload Document</div>
+      <div class="upload-card">
+        <div class="drop-zone" id="drop-zone"
+             ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" accept=".pdf" id="file-input" onchange="onFileSelected(event)" />
+          <div class="drop-icon">📂</div>
+          <h3>Drag &amp; drop a PDF here</h3>
+          <p>or click to browse · max 50 MB</p>
+        </div>
+        <div class="progress-bar-wrap" id="progress-wrap">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="upload-status" id="upload-status"></div>
+      </div>
+
+      <div class="section-title">Ingest History</div>
+      <div class="info-card" style="padding:0; overflow:hidden;">
+        <div id="log-container">
+          <div class="empty-log">No documents ingested yet in this session.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">System Status</div>
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">RAG Service</span>
+            <span class="pill pill-green" id="status-rag">● checking</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Qdrant</span>
+            <span class="pill pill-green" id="status-qdrant">● checking</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Ollama</span>
+            <span class="pill pill-green" id="status-ollama">● checking</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Auth</span>
+            <span class="pill pill-blue" id="status-auth">● Keycloak</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Session Stats</div>
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">Docs uploaded</span>
+            <span class="pill pill-blue" id="stat-docs">0</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total chunks</span>
+            <span class="pill pill-blue" id="stat-chunks">0</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Failed uploads</span>
+            <span class="pill" id="stat-failed" style="background:#2a0000;color:var(--red);border:1px solid var(--red)">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Access Control</div>
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">Privilege</span>
+            <span class="pill pill-blue">admin role</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Transport</span>
+            <span class="pill pill-blue">Istio mTLS</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Token</span>
+            <span class="pill pill-green">JWT / PKCE</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">/ingest policy</span>
+            <span class="pill pill-blue">admin only</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let keycloak = null;
+  let docsUploaded = 0;
+  let totalChunks = 0;
+  let failedUploads = 0;
+  const ingestLog = [];
+
+  // ── Upload ─────────────────────────────────────────────────────────────────
+  function onDragOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
+  function onDragLeave(e) { document.getElementById('drop-zone').classList.remove('dragover'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }
+  function onFileSelected(e) {
+    const file = e.target.files[0];
+    if (file) uploadFile(file);
+  }
+
+  async function uploadFile(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      setStatus('error', '✗ Only PDF files are supported.');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setStatus('error', '✗ File too large (max 50 MB).');
+      return;
+    }
+
+    setStatus('progress', `⏳ Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)…`);
+    animateProgress();
+
+    const form = new FormData();
+    form.append('file', file);
+    const headers = keycloak?.token ? { Authorization: `Bearer ${keycloak.token}` } : {};
+
+    const started = Date.now();
+    try {
+      if (keycloak) await keycloak.updateToken(10).catch(() => keycloak.login());
+      const resp = await fetch('/ingest', { method: 'POST', headers, body: form });
+      stopProgress();
+      const elapsed = ((Date.now() - started) / 1000).toFixed(1);
+
+      if (resp.ok) {
+        const d = await resp.json();
+        setStatus('success', `✓ ${d.filename} — ${d.chunks} chunks ingested in ${elapsed}s`);
+        docsUploaded++;
+        totalChunks += d.chunks;
+        document.getElementById('stat-docs').textContent = docsUploaded;
+        document.getElementById('stat-chunks').textContent = totalChunks;
+        addLogRow(d.filename, d.chunks, elapsed, 'ok');
+      } else {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        const msg = err.detail || 'Upload failed';
+        setStatus('error', `✗ ${msg}`);
+        failedUploads++;
+        document.getElementById('stat-failed').textContent = failedUploads;
+        addLogRow(file.name, 0, elapsed, 'error', msg);
+      }
+    } catch (e) {
+      stopProgress();
+      setStatus('error', '✗ Network error during upload.');
+      failedUploads++;
+      document.getElementById('stat-failed').textContent = failedUploads;
+    }
+
+    document.getElementById('file-input').value = '';
+  }
+
+  function setStatus(type, msg) {
+    const el = document.getElementById('upload-status');
+    el.textContent = msg;
+    el.className = 'upload-status ' + type;
+    el.style.display = 'block';
+  }
+
+  let progressInterval = null;
+  function animateProgress() {
+    const wrap = document.getElementById('progress-wrap');
+    const fill = document.getElementById('progress-fill');
+    wrap.style.display = 'block';
+    fill.style.width = '0%';
+    let pct = 0;
+    progressInterval = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 8, 90);
+      fill.style.width = pct + '%';
+    }, 300);
+  }
+  function stopProgress() {
+    clearInterval(progressInterval);
+    const fill = document.getElementById('progress-fill');
+    fill.style.width = '100%';
+    setTimeout(() => { document.getElementById('progress-wrap').style.display = 'none'; fill.style.width = '0%'; }, 600);
+  }
+
+  function addLogRow(filename, chunks, elapsed, status, errorMsg) {
+    const container = document.getElementById('log-container');
+    if (container.querySelector('.empty-log')) container.innerHTML = '';
+    if (!container.querySelector('table')) {
+      container.innerHTML = `
+        <table class="log-table">
+          <thead><tr>
+            <th>File</th><th>Chunks</th><th>Time</th><th>Status</th>
+          </tr></thead>
+          <tbody id="log-tbody"></tbody>
+        </table>`;
+    }
+    const tbody = document.getElementById('log-tbody');
+    const tr = document.createElement('tr');
+    const statusCell = status === 'ok'
+      ? `<span class="pill pill-green">✓ ok</span>`
+      : `<span class="pill pill-red" title="${esc(errorMsg || '')}">✗ failed</span>`;
+    tr.innerHTML = `
+      <td>📄 ${esc(filename)}</td>
+      <td>${chunks > 0 ? chunks : '—'}</td>
+      <td>${elapsed}s</td>
+      <td>${statusCell}</td>`;
+    tbody.insertBefore(tr, tbody.firstChild);
+  }
+
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  async function init() {
+    setLoading('Loading configuration…');
+    let cfg;
+    try {
+      const r = await fetch('/ui-config');
+      cfg = await r.json();
+    } catch (e) {
+      setLoading('Failed to load config.');
+      return;
+    }
+
+    if (!cfg.auth_enabled) {
+      // DEV_MODE — skip Keycloak
+      document.getElementById('user-name').textContent = 'dev (no auth)';
+      document.getElementById('user-avatar').textContent = '🔓';
+      document.getElementById('status-auth').textContent = '● dev mode';
+      document.getElementById('status-auth').className = 'pill pill-yellow';
+      fetchHealth();
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      return;
+    }
+
+    setLoading('Loading Keycloak adapter…');
+    let Keycloak;
+    try {
+      // keycloak.js is shipped as an ES module — must be loaded via dynamic import()
+      const mod = await import('/keycloak.js');
+      Keycloak = mod.default || mod.Keycloak || window.Keycloak;
+      if (!Keycloak) throw new Error('Keycloak constructor not found in /keycloak.js');
+    } catch (e) {
+      setLoading('Failed to load Keycloak adapter: ' + e.message);
+      console.error(e);
+      return;
+    }
+
+    setLoading('Authenticating…');
+    try {
+      keycloak = new Keycloak({ url: cfg.keycloak_url, realm: cfg.realm, clientId: cfg.client_id });
+      const authenticated = await keycloak.init({ onLoad: 'login-required', checkLoginIframe: false, pkceMethod: 'S256' });
+      if (!authenticated) { keycloak.login(); return; }
+    } catch (e) {
+      setLoading('Authentication error: ' + (e?.message || e));
+      console.error(e);
+      return;
+    }
+
+    // Enforce admin role — redirect to client UI if not admin
+    if (!keycloak.hasRealmRole('admin')) {
+      window.location.href = '/';
+      return;
+    }
+
+    setInterval(() => keycloak.updateToken(30).catch(() => keycloak.login()), 15000);
+
+    const profile = keycloak.tokenParsed;
+    const displayName = profile.name || profile.preferred_username || profile.sub;
+    const initials = displayName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    document.getElementById('user-name').textContent = displayName;
+    document.getElementById('user-avatar').textContent = initials;
+
+    fetchHealth();
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  }
+
+  async function fetchHealth() {
+    try {
+      const r = await fetch('/health', { headers: keycloak?.token ? { Authorization: `Bearer ${keycloak.token}` } : {} });
+      if (!r.ok) return;
+      const d = await r.json();
+      setStatusPill('status-qdrant', d.qdrant);
+      setStatusPill('status-ollama', d.ollama);
+      setStatusPill('status-rag', d.status);
+    } catch (_) {}
+  }
+
+  function setStatusPill(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const ok = val === 'ok';
+    el.className = 'pill ' + (ok ? 'pill-green' : '');
+    if (!ok) el.style.cssText = 'background:#2a0000;color:var(--red);border:1px solid var(--red)';
+    el.textContent = `● ${val}`;
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve;
+      s.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+
+  function setLoading(msg) { document.getElementById('loading-msg').textContent = msg; }
+  function logout() { keycloak.logout({ redirectUri: window.location.origin }); }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  init();
+</script>
+</body>
+</html>
