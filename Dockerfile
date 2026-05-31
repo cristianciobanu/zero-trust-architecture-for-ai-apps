@@ -7,9 +7,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Bake the embedding model directly into the image (no HuggingFace download at runtime)
-COPY models/all-MiniLM-L6-v2 /app/models/all-MiniLM-L6-v2
+# COPY models/all-MiniLM-L6-v2 /app/models/all-MiniLM-L6-v2
 
-COPY src/ ./
+COPY rag-service/src/ ./
 
 RUN useradd --uid 1000 --no-create-home --shell /bin/false appuser
 
