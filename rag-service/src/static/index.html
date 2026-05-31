@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Document Q&amp;A</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #4f8ef7;
+      --accent-dim: #1e3a6e;
+      --green: #34c77b;
+      --yellow: #f5c842;
+      --red: #e05555;
+      --text: #e8eaf6;
+      --muted: #7b82a8;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── header ─────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-size: 17px; font-weight: 600; letter-spacing: 0.2px; }
+    .logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .user-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px 6px 8px;
+      font-size: 13px;
+    }
+    .user-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+    }
+    .btn {
+      border: none; cursor: pointer;
+      border-radius: 7px;
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 7px 16px;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ── layout ─────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      flex: 1;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 24px 0;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    /* ── chat area ───────────────────────────────────────────── */
+    .chat-pane {
+      display: flex; flex-direction: column;
+      padding-right: 24px;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+    }
+
+    .demo-questions {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .demo-q {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .demo-q:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 20px;
+      min-height: 300px;
+      max-height: calc(100vh - 320px);
+    }
+
+    .msg { display: flex; flex-direction: column; gap: 6px; }
+    .msg-user .bubble {
+      align-self: flex-end;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      border-radius: var(--radius) var(--radius) 2px var(--radius);
+    }
+    .msg-assistant .bubble {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px var(--radius) var(--radius) var(--radius);
+    }
+    .bubble {
+      padding: 12px 16px;
+      max-width: 90%;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .msg-label { font-size: 11px; color: var(--muted); padding: 0 4px; }
+    .msg-user .msg-label { align-self: flex-end; }
+
+    .sources-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 4px;
+    }
+    .source-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      padding: 2px 8px;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .source-tag::before { content: '📄'; font-size: 10px; }
+
+    .security-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; padding: 3px 10px;
+      border-radius: 4px; font-weight: 600;
+      align-self: flex-start;
+    }
+    .security-tag.sanitized { background: #2a2000; border: 1px solid var(--yellow); color: var(--yellow); }
+    .security-tag.blocked   { background: #2a0000; border: 1px solid var(--red);    color: var(--red);    }
+
+    /* thinking indicator */
+    .thinking { display: flex; gap: 5px; align-items: center; padding: 14px 16px; }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── input bar ───────────────────────────────────────────── */
+    .input-bar {
+      padding: 16px 0 20px;
+      display: flex; gap: 10px;
+      position: sticky;
+      bottom: 0;
+      background: var(--bg);
+    }
+    .input-bar textarea {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 12px 16px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s;
+      line-height: 1.5;
+      min-height: 50px;
+      max-height: 140px;
+    }
+    .input-bar textarea:focus { border-color: var(--accent); }
+    .input-bar textarea::placeholder { color: var(--muted); }
+    .send-btn {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius);
+      width: 50px; font-size: 20px;
+      cursor: pointer; transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── sidebar ─────────────────────────────────────────────── */
+    .sidebar { padding-left: 24px; padding-top: 0; }
+    .sidebar-section { margin-bottom: 24px; }
+    .sidebar-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .info-row {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--muted); }
+    .pill {
+      font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+    }
+    .pill-green { background: #0a2e1a; color: var(--green); border: 1px solid var(--green); }
+    .pill-blue  { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+    .pill-yellow{ background: #2a2000; color: var(--yellow); border: 1px solid var(--yellow); }
+
+    #loading-screen {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px;
+      z-index: 100;
+    }
+    #loading-screen .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-screen p { color: var(--muted); font-size: 14px; }
+
+    /* ── empty state ─────────────────────────────────────────── */
+    .empty-state {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; color: var(--muted);
+      padding: 40px;
+      text-align: center;
+    }
+    .empty-state .icon { font-size: 48px; }
+    .empty-state h3 { color: var(--text); font-size: 18px; }
+    .empty-state p { font-size: 14px; max-width: 340px; line-height: 1.6; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay while Keycloak initialises -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p id="loading-msg">Initialising authentication…</p>
+</div>
+
+<!-- Main app (hidden until authenticated) -->
+<div id="app" style="display:none; flex-direction:column; min-height:100vh;">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <div class="logo-text">Financial Q&amp;A Assistant</div>
+        <div class="logo-sub">Zero-Trust RAG · Keycloak · Istio mTLS</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name">Loading…</span>
+      </div>
+      <a id="admin-link" href="/admin" style="display:none" class="btn btn-ghost" title="Admin portal">⚙ Admin</a>
+      <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ── Chat pane ── -->
+    <div class="chat-pane">
+
+      <div class="demo-questions" id="demo-questions">
+        <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:4px;">Try:</span>
+        <button class="demo-q" onclick="askDemo(this)">What was the net revenue in Q3?</button>
+        <button class="demo-q" onclick="askDemo(this)">Summarise the key risk factors</button>
+        <button class="demo-q" onclick="askDemo(this)">What is the debt-to-equity ratio?</button>
+        <button class="demo-q" onclick="askDemo(this)">Compare gross margins year-over-year</button>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="empty-state" id="empty-state">
+          <div class="icon">💬</div>
+          <h3>Ask about your documents</h3>
+          <p>Ask anything about the ingested financial reports. Your query is vector-searched against Qdrant and answered by Mistral via Ollama.</p>
+        </div>
+      </div>
+
+      <div class="input-bar">
+        <textarea
+          id="question-input"
+          rows="1"
+          placeholder="Ask a question about the financial documents…"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendQuery()" title="Send">➤</button>
+      </div>
+    </div>
+
+    <!-- ── Sidebar ── -->
+    <div class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">System Status</div>
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">System</span>
+            <span class="pill pill-green" id="status-overall">● checking…</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Auth</span>
+            <span class="pill pill-blue" id="status-auth">● Keycloak</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Recent Questions</span>
+          <button id="clear-history-btn" onclick="clearHistory()"
+                  style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:0;text-transform:none;letter-spacing:0;"
+                  title="Clear stored history">clear</button>
+        </div>
+        <div class="info-card" id="history-card">
+          <div id="history-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div id="history-empty" style="font-size:12px;color:var(--muted);text-align:center;padding:6px 0;">No history yet</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- Keycloak JS adapter loaded dynamically from the Keycloak server -->
+<script>
+  let keycloak = null;
+
+  // ── Chat history (localStorage, per-user, last 50 messages, last 5 shown) ───
+  const HISTORY_MAX = 50;
+  const HISTORY_RECENT = 5;
+  let historyKey = 'rag-chat-history:anon';
+  let history = [];
+
+  function loadHistory() {
+    try { history = JSON.parse(localStorage.getItem(historyKey) || '[]'); }
+    catch (_) { history = []; }
+  }
+  function saveHistory() {
+    try { localStorage.setItem(historyKey, JSON.stringify(history.slice(-HISTORY_MAX))); }
+    catch (_) {}
+  }
+  function recordMessage(entry) {
+    history.push({ ...entry, ts: Date.now() });
+    if (history.length > HISTORY_MAX) history = history.slice(-HISTORY_MAX);
+    saveHistory();
+    renderRecent();
+  }
+  function clearHistory() {
+    history = [];
+    saveHistory();
+    document.getElementById('messages').innerHTML = `
+      <div class="empty-state" id="empty-state">
+        <div class="icon">💬</div>
+        <h3>Ask about your documents</h3>
+        <p>Ask anything about the ingested financial reports. Your query is vector-searched against Qdrant and answered by Mistral via Ollama.</p>
+      </div>`;
+    renderRecent();
+  }
+  function renderRecent() {
+    const list = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
+    if (!list) return;
+    const questions = history.filter(m => m.role === 'user').slice(-HISTORY_RECENT).reverse();
+    list.innerHTML = '';
+    if (questions.length === 0) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    for (const q of questions) {
+      const btn = document.createElement('button');
+      btn.className = 'demo-q';
+      btn.style.cssText = 'text-align:left;font-size:12px;width:100%;padding:6px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      btn.title = q.text;
+      btn.textContent = q.text;
+      btn.onclick = () => { document.getElementById('question-input').value = q.text; sendQuery(); };
+      list.appendChild(btn);
+    }
+  }
+  function restoreMessages() {
+    if (history.length === 0) return;
+    document.getElementById('empty-state')?.remove();
+    for (const m of history) {
+      if (m.role === 'user') appendUserMsg(m.text);
+      else if (m.role === 'assistant') appendAssistantMsg(m.text, m.sources || [], !!m.sanitized);
+      else if (m.role === 'blocked') appendBlockedMsg(m.text, m.detail || '');
+    }
+    scrollToBottom();
+  }
+
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  async function init() {
+    setLoading('Loading configuration…');
+    let cfg;
+    try {
+      const r = await fetch('/ui-config');
+      cfg = await r.json();
+    } catch (e) {
+      setLoading('Failed to load config. Is the service running?');
+      return;
+    }
+
+    if (!cfg.auth_enabled) {
+      // DEV_MODE — skip Keycloak, go straight to the app
+      document.getElementById('user-name').textContent = 'dev (no auth)';
+      document.getElementById('user-avatar').textContent = '🔓';
+      document.getElementById('status-auth').textContent = '● dev mode';
+      document.getElementById('status-auth').className = 'pill pill-yellow';
+      historyKey = 'rag-chat-history:dev';
+      loadHistory();
+      restoreMessages();
+      renderRecent();
+      fetchHealth();
+      document.getElementById('loading-screen').style.display = 'none';
+      const appEl = document.getElementById('app');
+      appEl.style.display = 'flex';
+      return;
+    }
+
+    setLoading('Loading Keycloak adapter…');
+    let Keycloak;
+    try {
+      // keycloak.js is shipped as an ES module — must be loaded via dynamic import()
+      const mod = await import('/keycloak.js');
+      Keycloak = mod.default || mod.Keycloak || window.Keycloak;
+      if (!Keycloak) throw new Error('Keycloak constructor not found in /keycloak.js');
+    } catch (e) {
+      setLoading('Failed to load Keycloak adapter: ' + e.message);
+      console.error(e);
+      return;
+    }
+
+    setLoading('Authenticating…');
+    try {
+      keycloak = new Keycloak({
+        url: cfg.keycloak_url,
+        realm: cfg.realm,
+        clientId: cfg.client_id,
+      });
+
+      const authenticated = await keycloak.init({
+        onLoad: 'login-required',
+        checkLoginIframe: false,
+        pkceMethod: 'S256',
+      });
+
+      if (!authenticated) {
+        keycloak.login();
+        return;
+      }
+    } catch (e) {
+      setLoading('Authentication error: ' + (e?.message || e));
+      console.error(e);
+      return;
+    }
+
+    // Refresh token 30s before expiry
+    setInterval(() => keycloak.updateToken(30).catch(() => keycloak.login()), 15000);
+
+    // Show user info
+    const profile = keycloak.tokenParsed;
+    const displayName = profile.name || profile.preferred_username || profile.sub;
+    const initials = displayName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    document.getElementById('user-name').textContent = displayName;
+    document.getElementById('user-avatar').textContent = initials;
+
+    // Per-user chat history — restore from localStorage
+    historyKey = 'rag-chat-history:' + (profile.sub || profile.preferred_username || 'anon');
+    loadHistory();
+    restoreMessages();
+    renderRecent();
+
+    // Fetch health status
+    fetchHealth();
+
+    // Show admin link for users with admin role
+    if (keycloak.hasRealmRole('admin')) {
+      document.getElementById('admin-link').style.display = 'inline-flex';
+    }
+
+    // Show app
+    document.getElementById('loading-screen').style.display = 'none';
+    const appEl = document.getElementById('app');
+    appEl.style.display = 'flex';
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+
+  function setLoading(msg) {
+    document.getElementById('loading-msg').textContent = msg;
+  }
+
+  function logout() {
+    keycloak.logout({ redirectUri: window.location.origin });
+  }
+
+  // ── Health check ───────────────────────────────────────────────────────────
+  async function fetchHealth() {
+    try {
+      const r = await fetch('/health', { headers: authHeader() });
+      if (!r.ok) {
+        setOverallStatus('unavailable');
+        return;
+      }
+      const d = await r.json();
+      setOverallStatus(d.status);
+    } catch (_) {
+      setOverallStatus('unavailable');
+    }
+  }
+
+  function setOverallStatus(val) {
+    const el = document.getElementById('status-overall');
+    if (!el) return;
+    const ok = val === 'ok';
+    el.className = 'pill ' + (ok ? 'pill-green' : '');
+    if (!ok) el.style.cssText = 'background:#2a0000;color:var(--red);border:1px solid var(--red)';
+    el.textContent = ok ? '● Online' : `● ${val}`;
+  }
+
+  // ── Query ──────────────────────────────────────────────────────────────────
+  function authHeader() {
+    return keycloak?.token ? { Authorization: `Bearer ${keycloak.token}` } : {};
+  }
+
+  async function sendQuery() {
+    const input = document.getElementById('question-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    document.getElementById('empty-state')?.remove();
+    appendUserMsg(question);
+    recordMessage({ role: 'user', text: question });
+    input.value = '';
+    autoResize(input);
+    setSending(true);
+
+    const thinkingEl = appendThinking();
+
+    if (keycloak) {
+      try {
+        await keycloak.updateToken(10);
+      } catch (_) { keycloak.login(); return; }
+    }
+
+    try {
+      const resp = await fetch('/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ question }),
+      });
+
+      thinkingEl.remove();
+
+      if (resp.status === 400) {
+        const err = await resp.json();
+        const detail = err.detail || 'Request blocked by security controls.';
+        appendBlockedMsg(question, detail);
+        recordMessage({ role: 'blocked', text: question, detail });
+      } else if (!resp.ok) {
+        const text = 'Service error: ' + resp.status;
+        appendAssistantMsg(text, [], false);
+        recordMessage({ role: 'assistant', text, sources: [], sanitized: false });
+      } else {
+        const data = await resp.json();
+        appendAssistantMsg(data.answer, data.sources || [], data.sanitized);
+        recordMessage({ role: 'assistant', text: data.answer, sources: data.sources || [], sanitized: !!data.sanitized });
+      }
+    } catch (e) {
+      thinkingEl?.remove();
+      const text = 'Network error. Is the service reachable?';
+      appendAssistantMsg(text, [], false);
+      recordMessage({ role: 'assistant', text, sources: [], sanitized: false });
+    }
+
+    setSending(false);
+    scrollToBottom();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  function setSending(busy) {
+    const btn = document.getElementById('send-btn');
+    const inp = document.getElementById('question-input');
+    btn.disabled = busy;
+    inp.disabled = busy;
+  }
+
+  function askDemo(btn) { document.getElementById('question-input').value = btn.textContent; sendQuery(); }
+
+  // ── Message rendering ──────────────────────────────────────────────────────
+  function appendUserMsg(text) {
+    const div = document.createElement('div');
+    div.className = 'msg msg-user';
+    div.innerHTML = `
+      <span class="msg-label">You</span>
+      <div class="bubble">${esc(text)}</div>`;
+    document.getElementById('messages').appendChild(div);
+  }
+
+  function appendAssistantMsg(text, sources, sanitized) {
+    const div = document.createElement('div');
+    div.className = 'msg msg-assistant';
+    const sanitizedBadge = sanitized
+      ? `<div class="security-tag sanitized">⚠️ Input/output was sanitized</div>`
+      : '';
+    const sourcesHtml = sources.length
+      ? `<div class="sources-row">${sources.map(s => `<span class="source-tag">${esc(s)}</span>`).join('')}</div>`
+      : '';
+    div.innerHTML = `
+      <span class="msg-label">Assistant</span>
+      <div class="bubble">${esc(text)}</div>
+      ${sanitizedBadge}
+      ${sourcesHtml}`;
+    document.getElementById('messages').appendChild(div);
+  }
+
+  function appendBlockedMsg(question, detail) {
+    const div = document.createElement('div');
+    div.className = 'msg msg-assistant';
+    div.innerHTML = `
+      <span class="msg-label">Security Control</span>
+      <div class="bubble" style="border-color:var(--red)">${esc(detail)}</div>
+      <div class="security-tag blocked">🚫 Prompt injection blocked</div>`;
+    document.getElementById('messages').appendChild(div);
+  }
+
+  function appendThinking() {
+    const div = document.createElement('div');
+    div.className = 'msg msg-assistant';
+    div.innerHTML = `
+      <span class="msg-label">Assistant</span>
+      <div class="bubble" style="padding:8px 16px">
+        <div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>`;
+    document.getElementById('messages').appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function scrollToBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  // ── Start ──────────────────────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>

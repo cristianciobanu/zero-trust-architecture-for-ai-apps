@@ -1,0 +1,10 @@
+fastapi==0.115.8
+uvicorn==0.34.0
+pydantic==2.10.6
+httpx==0.28.1
+qdrant-client==1.13.3
+sentence-transformers==3.4.1
+python-multipart==0.0.20
+langchain-community==0.3.17
+langchain-text-splitters==0.3.6
+pypdf==5.3.1
