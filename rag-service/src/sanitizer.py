@@ -6,7 +6,7 @@ before it reaches the retrieval/LLM pipeline.
 """
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # Patterns that indicate prompt injection attempts
 INJECTION_PATTERNS: list[tuple[str, str]] = [
